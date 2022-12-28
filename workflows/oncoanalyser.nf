@@ -66,6 +66,7 @@ include { PEACH             } from '../modules/local/peach/main'
 include { PROTECT           } from '../modules/local/protect/main'
 include { PURPLE            } from '../modules/local/purple/main'
 include { SIGS              } from '../modules/local/sigs/main'
+include { TEAL              } from '../modules/local/teal/main'
 include { VIRUSBREAKEND     } from '../modules/local/virusbreakend/main'
 include { VIRUSINTERPRETER  } from '../modules/local/virusinterpreter/main'
 
@@ -121,7 +122,7 @@ workflow ONCOANALYSER {
     hmf_data = PREPARE_REFERENCE.out.hmf_data
 
     // Set up channel with common inputs for several processes
-    if (run.amber || run.cobalt || run.sage || run.lilac) {
+    if (run.amber || run.cobalt || run.sage || run.lilac || run.teal) {
         // channel: [val(meta), tumor_bam, normal_bam, tumor_bai, normal_bai]
         ch_bams_and_indices = ch_inputs
             .map { meta ->
@@ -176,15 +177,16 @@ workflow ONCOANALYSER {
     //
     // MODULE: Run PICARD_COLLECTWGSMETRICS to generate stats required for downstream processes
     //
-    if (run.virusinterpreter || run.orange) {
+    if (run.orange || run.teal || run.virusinterpreter) {
         // Create inputs and create process-specific meta
         // NOTE(SW): CUPPA only requires collectwgsmetrics for the tumor sample in the upstream
-        // process Virus Interpreter but ORANGE currently requires collectwgsmetrics for both tumor
-        // and normal sample
+        // process Virus Interpreter but ORANGE and TEAL currently requires collectwgsmetrics for
+        // both tumor and normal sample
+        run_cwm_somatic_only = run.orange || run.teal
         // channel: [val(meta_cwm), bam]
         ch_cwm_inputs_all = ch_inputs
             .flatMap { meta ->
-                def sample_types = run.orange ? [Constants.DataType.TUMOR, Constants.DataType.NORMAL] : [Constants.DataType.TUMOR]
+                def sample_types = run_cwm_somatic_only ? [Constants.DataType.TUMOR] : [Constants.DataType.TUMOR, Constants.DataType.NORMAL]
                 return sample_types
                     .collect { sample_type ->
                         def bam = meta.get([Constants.FileType.BAM_WGS, sample_type])
@@ -666,6 +668,45 @@ workflow ONCOANALYSER {
         ch_versions = ch_versions.mix(CHORD.out.versions)
         ch_chord_out = ch_chord_out.mix(WorkflowOncoanalyser.restoreMeta(CHORD.out.prediction, ch_inputs))
     }
+
+    //
+    // MODULE: Run TEAL to characterise telomeres
+    //
+    if (run.teal) {
+        // Select input sources
+        // channel: [val(meta), tumor_bam, normal_bam, tumor_bai, normal_bai, tumor_wgs_metrics, normal_wgs_metrics, cobalt_dir, purple_dir]
+        // NOTE(SW): assuming here that TEAL is being run in tumor/normal mode and so we expect a tumor metrics file and normal metrics file
+        ch_teal_inputs_source = WorkflowOncoanalyser.groupByMeta(
+            ch_bams_and_indices,
+            run.collectwgsmetrics ? ch_cwm_out.somatic : WorkflowOncoanalyser.getInput(ch_inputs, [Constants.FileType.COLLECTWGSMETRICS, Constants.DataType.TUMOR]),
+            run.collectwgsmetrics ? ch_cwm_out.germline : WorkflowOncoanalyser.getInput(ch_inputs, [Constants.FileType.COLLECTWGSMETRICS, Constants.DataType.NORMAL]),
+            run.cobalt ? ch_cobalt_out : WorkflowOncoanalyser.getInput(ch_inputs, [Constants.FileType.COBALT_DIR, Constants.DataType.TUMOR_NORMAL]),
+            run.purple ? ch_purple_out : WorkflowOncoanalyser.getInput(ch_inputs, [Constants.FileType.PURPLE_DIR, Constants.DataType.TUMOR_NORMAL]),
+        )
+
+        // Create inputs and create process-specific meta
+        // channel: [val(meta_teal), tumor_bam, normal_bam, tumor_bai, normal_bai, tumor_wgs_metrics, normal_wgs_metrics, cobalt_dir, purple_dir]
+        ch_teal_inputs = ch_teal_inputs_source
+            .map {
+                def meta = it[0]
+                def other = it[1..-1]
+                def meta_teal = [
+                    id: meta.id,
+                    tumor_id: meta.get(['sample_name', Constants.DataType.TUMOR]),
+                    normal_id: meta.get(['sample_name', Constants.DataType.NORMAL]),
+                ]
+                return [meta_teal, *other]
+            }
+
+        // Run process
+        TEAL(
+            ch_teal_inputs,
+        )
+
+        // Set outputs
+        ch_versions = ch_versions.mix(TEAL.out.versions)
+    }
+
 
     //
     // SUBWORKFLOW: Run LILAC for HLA typing and somatic CNV and SNV calling

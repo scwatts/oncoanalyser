@@ -1,0 +1,60 @@
+name: teal
+description: Measure telomere content and estimate telomeric length
+keywords:
+  - telomere
+tools:
+  - teal:
+      description: Measures telomere content and estimates telomeric length.
+      homepage: https://github.com/hartwigmedical/hmftools/tree/master/teal
+      documentation: https://github.com/hartwigmedical/hmftools/tree/master/teal
+      licence: "['GPL v3']"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [id: 'sample_id', tumor_id: 'tumor_name', normal_id: 'normal_name']
+  - tumor_bam:
+      type: file
+      description: Tumor BAM file
+      pattern: "*.{bam}"
+  - normal_bam:
+      type: file
+      description: Normal BAM file
+      pattern: "*.{bam}"
+  - tumor_bai:
+      type: file
+      description: Tumor BAI file
+      pattern: "*.{bai}"
+  - normal_bai:
+      type: file
+      description: Normal BAI file
+      pattern: "*.{bai}"
+  - tumor_wgs_metrics:
+      type: file
+      description: Tumor WGS metrics file
+  - normal_wgs_metrics:
+      type: file
+      description: Normal WGS metrics file
+  - cobalt_dir:
+      type: directory
+      description: COBALT output directory
+  - purple_dir:
+      type: directory
+      description: PURPLE output directory
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [id: 'sample_id', tumor_id: 'tumor_name', normal_id: 'normal_name']
+  - teal_dir:
+      type: directory
+      description: TEAL output directory
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@scwatts"

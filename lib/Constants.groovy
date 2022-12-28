@@ -36,6 +36,7 @@ class Constants {
         SAGE,
         SIGS,
         SVPREP,
+        TEAL,
         VIRUSINTERPRETER,
     }
 
