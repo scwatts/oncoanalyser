@@ -55,6 +55,7 @@ process PAVE_SOMATIC {
             -mappability_bed ${segment_mappability} \\
             -vcf_file ${sage_vcf} \\
             -read_pass_only \\
+            -write_pass_only \\
             ${gnomad_args} \\
             -output_dir ./
 
