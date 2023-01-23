@@ -2,7 +2,7 @@ process SIGS {
     tag "${meta.id}"
     label 'process_low'
 
-    container 'docker.io/scwatts/sigs:1.0--0'
+    container 'docker.io/scwatts/sigs:1.1--0'
 
     input:
     tuple val(meta), path(smlv_vcf)

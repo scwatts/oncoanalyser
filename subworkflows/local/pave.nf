@@ -13,6 +13,7 @@ workflow PAVE {
         ref_data_genome_fai             //    file: /path/to/genome_fai
         ref_data_genome_version         //     val: genome version
         ref_data_sage_pon               //    file: /path/to/sage_pon
+        ref_data_sage_pon_artefacts     //    file: /path/to/sage_pon_artefacts
         ref_data_sage_blocklist_regions //    file: /path/to/sage_blocklist_regions
         ref_data_sage_blocklist_sites   //    file: /path/to/sage_blocklist_sites
         ref_data_clinvar_annotations    //    file: /path/to/clinvar_annotations
@@ -47,6 +48,7 @@ workflow PAVE {
             ref_data_genome_fai,
             ref_data_genome_version,
             ref_data_sage_pon,
+            ref_data_sage_pon_artefacts,
             ref_data_segment_mappability,
             ref_data_driver_gene_panel,
             ref_data_ensembl_data_resources,
