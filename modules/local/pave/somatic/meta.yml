@@ -34,10 +34,14 @@ input:
   - genome_ver:
       type: string
       description: Reference genome version
-  - sage_pong:
+  - sage_pon:
       type: file
       description: SAGE PON file
       pattern: "*.{tsv.gz}"
+  - sage_pon_artefacts:
+      type: file
+      description: SAGE PON artefacts file
+      pattern: "*.{tsv}"
   - segment_mappability:
       type: file
       description: Segment mappability file

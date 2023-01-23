@@ -1,10 +1,8 @@
-// NOTE(SW): PAVE gnomad filtering is not yet documented but is used in Pipeline5 https://github.com/hartwigmedical/pipeline5/blob/master/cluster/src/main/java/com/hartwig/pipeline/tertiary/pave/PaveArguments.java#L27-L28
-
 process PAVE_SOMATIC {
     tag "${meta.id}"
     label 'process_medium'
 
-    container 'docker.io/scwatts/pave:1.2.2--0'
+    container 'docker.io/scwatts/pave:1.4--0'
 
     input:
     tuple val(meta), path(sage_vcf)
@@ -12,6 +10,7 @@ process PAVE_SOMATIC {
     path genome_fai
     val genome_ver
     path sage_pon
+    path sage_pon_artefacts
     path segment_mappability
     path driver_gene_panel
     path ensembl_data_resources
@@ -51,18 +50,17 @@ process PAVE_SOMATIC {
             -driver_gene_panel ${driver_gene_panel} \\
             -pon_file ${sage_pon} \\
             -pon_filters "${pon_filters}" \\
-            -pon_artefact_file
+            -pon_artefact_file ${sage_pon_artefacts} \\
             -mappability_bed ${segment_mappability} \\
             -vcf_file ${sage_vcf} \\
             -read_pass_only \\
-            -write_pass_only \\
             ${gnomad_args} \\
             -output_dir ./
 
     # NOTE(SW): hard coded since there is no reliable way to obtain version information.
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        pave: 1.2.2
+        pave: 1.4
     END_VERSIONS
     """
 
